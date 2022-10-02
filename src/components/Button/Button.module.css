@@ -1,0 +1,30 @@
+.buttonWrapper{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 20px 0;
+}
+.button {
+    align-items: center;
+    font-family: inherit;
+    font-weight: 500;
+    font-size: 16px;
+    padding: 0.7em 1.4em 0.7em 1.1em;
+    color: white;
+    background: linear-gradient(0deg, rgba(146, 70, 173) 0%, rgba(212, 142, 236, 1) 100%);
+    border: none;
+    box-shadow: 0 0.7em 1.5em -0.5em #da51f598;
+    letter-spacing: 0.05em;
+    border-radius: 10em;
+    cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: manipulation;
+}
+
+.button:hover {
+    box-shadow: 0 0.5em 3em -2em #9620c898;
+    scale: 1.03;
+    transition: 250ms;
+}
+
