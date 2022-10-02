@@ -8,9 +8,9 @@ const Searchbar = ({onSubmit}) => {
 
     const handleSubmit = (event) => {
         event.preventDefault();
-        (searchQuerry.trim() === '')?
-            alert('Please enter something to searh querry'):
-            onSubmit(searchQuerry);
+        (searchQuerry.trim() === '')
+            ? alert('Please enter something to searh querry')
+            : onSubmit(searchQuerry);
     }
     
     const handleInput = (event) => {
