@@ -1,113 +1,97 @@
-import { Component } from "react";
+import { useState, useEffect } from 'react';
 import * as API from '../services/api';
-import Searchbar from "./Searchbar/Searchbar"
-import ImageGellary from "./imageGallery/ImageGallery";
-import Button from "./Button/Button";
-import Loader from "./Loader/Loader";
-import Modal from "./Modal/Modal";
+import Searchbar from './Searchbar/Searchbar';
+import ImageGellary from './imageGallery/ImageGallery';
+import Button from './Button/Button';
+import Loader from './Loader/Loader';
+import Modal from './Modal/Modal';
 
-export class App extends Component {
+export const App = () => {
+  const [searchQuerry, setSearchQuerry] = useState('');
+  const [totalImgFind, setTotalImgFind] = useState(0);
+  const [gallery, setGallery] = useState([]);
+  const [page, setPage] = useState(1);
+  const [error, setError] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [currentImgUrl, setCurrentImgUrl] = useState('');
+  const [currentImgTag, setCurrentImgTag] = useState('');
 
-  state = {
-    searchQuerry: "",
-    totalImgFind: 0,
-    gallery: [],
-    page: 1,
-    error: null,
-    isLoading: false,
-    currentImgUrl: "",
-    currentImgTag: ""
-  }
-
-  componentDidUpdate(_, prevState) {
-    const { page, searchQuerry } = this.state;
-    if ( (searchQuerry && prevState.searchQuerry !== searchQuerry) || prevState.page !== page ) {
-      this.setState({ isLoading: true });
-      setTimeout(() => {
-        this.getImages(searchQuerry, page);
-      }, 500)
-      
+  useEffect(() => {
+    if (!searchQuerry) {
+      return;
     }
-  }
+    const getImages = async () => {
+      try {
+        const data = await API.fetchImages(searchQuerry, page);
+        const totalHits = data.totalHits;
+        const images = data.hits.map(
+          ({ id, largeImageURL, webformatURL, tags }) => {
+            return {
+              id,
+              largeImageURL,
+              webformatURL,
+              tags,
+            };
+          }
+        );
 
-  onModalOpen = (url, tag) => {
-    this.setState({
-      currentImgUrl: url,
-      currentImgTag: tag
-    })
-  }
-
-  onModalClose = () => {
-    this.setState({
-      currentImgUrl: "",
-      currentImgTag: ""
-    })
-  } 
-
-  getImages = async (searchQuerry, page) => {
-    try {
-      const data = await API.fetchImages(searchQuerry, page);
-      const totalHits = data.totalHits;
-      const images = data.hits.map(({ id, largeImageURL, webformatURL, tags }) => {
-        return {
-          id,
-          largeImageURL,
-          webformatURL,
-          tags,
+        if (images.length === 0) {
+          throw new Error('Not find. Please, enter another request');
         }
-      })
-      
-      this.setState(({ gallery }) => ({
-        gallery: [...gallery, ...images],
-        totalImgFind: totalHits
-      }));
-      
-      if(images.length === 0) {
-        alert("Not find. Please, enter another request");
+
+        setGallery(prev => [...prev, ...images]);
+        setTotalImgFind(totalHits);
+      } catch (error) {
+        setError(error.message);
+      } finally {
+        setIsLoading(false);
       }
-    } catch (error) {
-      this.setState({ error });
-    } finally {
-      this.setState({isLoading: false});
+    };
+
+    setIsLoading(true);
+    setTimeout(() => {
+      getImages();
+    }, 300);
+  }, [searchQuerry, page]);
+
+  const handleSubmit = querry => {
+    if (searchQuerry !== querry) {
+      setSearchQuerry(querry);
+      setGallery([]);
+      setPage(1);
+      setError(null);
     }
-  }
+  };
 
-  loadMoreImages = () => {
-    this.setState(({page}) => {
-        return {
-            page: page + 1
-        }
-    })
-  }
+  const loadMoreImages = () => {
+    setPage(prev => prev + 1);
+  };
 
-  handleSubmit = querry => {
-    this.setState(({ searchQuerry }) => {
-      if (querry !== searchQuerry)
-      return {
-        searchQuerry: querry,
-        gallery: [],
-        page: 1
-      }
-    });
-  }
+  const onModalOpen = (url, tag) => {
+    setCurrentImgUrl(url);
+    setCurrentImgTag(tag);
+  };
 
-  render() {
-    const { gallery, isLoading, currentImgUrl, currentImgTag, totalImgFind } = this.state;
-    const { handleSubmit, loadMoreImages, onModalOpen, onModalClose } = this;
-    
-    return (
-      <div style={{marginBottom:'15px'}}>
-        <Searchbar onSubmit={handleSubmit} />
-        <ImageGellary images={gallery} onClick={onModalOpen} />
-        {gallery.length > 0 && gallery.length < totalImgFind && <Button onClick={loadMoreImages} />}
-        {isLoading && <Loader isLoading={isLoading} />}
-        {currentImgUrl && <Modal
-            closeModal={onModalClose}
-            url={currentImgUrl}
-            tag={currentImgTag}
-          />}
-      </div>
-    )
-  }
-}
+  const onModalClose = () => {
+    setCurrentImgUrl('');
+    setCurrentImgTag('');
+  };
 
+  return (
+    <div style={{ marginBottom: '15px' }}>
+      <Searchbar onSubmit={handleSubmit} />
+      <ImageGellary images={gallery} error={error} onClick={onModalOpen} />
+      {gallery.length > 0 && gallery.length < totalImgFind && (
+        <Button onClick={loadMoreImages} />
+      )}
+      {isLoading && <Loader isLoading={isLoading} />}
+      {currentImgUrl && (
+        <Modal
+          closeModal={onModalClose}
+          url={currentImgUrl}
+          tag={currentImgTag}
+        />
+      )}
+    </div>
+  );
+};
