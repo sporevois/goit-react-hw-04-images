@@ -1,41 +1,38 @@
-import { Component } from "react";
-import { createPortal } from "react-dom";
-import styles from "../Modal/Modal.module.css";
+import { useEffect } from 'react';
+import { createPortal } from 'react-dom';
+import styles from '../Modal/Modal.module.css';
 import PropTypes from 'prop-types';
 
-const modalRoot = document.getElementById("modal-root");
+const modalRoot = document.getElementById('modal-root');
 
-export default class Modal extends Component {
+const Modal = ({ url, tag, closeModal }) => {
+  useEffect(() => {
+    window.addEventListener('keydown', onCloseModal);
+    return () => {
+      return window.removeEventListener('keydown', onCloseModal);
+    };
+  });
 
-    componentDidMount () {
-        window.addEventListener('keydown', this.closeModal)
+  const onCloseModal = ({ target, currentTarget, code }) => {
+    if (target === currentTarget || code === 'Escape') {
+      closeModal();
     }
+  };
 
-    componentWillUnmount () {
-        window.removeEventListener('keydown', this.closeModal)
-    }
+  return createPortal(
+    <div className={styles.overlay} onClick={onCloseModal}>
+      <div className={styles.modal}>
+        <img className={styles.modalImg} src={url} alt={tag} />
+      </div>
+    </div>,
+    modalRoot
+  );
+};
 
-    closeModal = ({target, currentTarget, code}) => {
-        if (target === currentTarget || code === "Escape") {
-          this.props.closeModal();
-        }
-    }
-
-    render() {
-        const { closeModal } = this;
-        const { url, tag } = this.props;
-        return createPortal(
-            <div className={styles.overlay} onClick={closeModal}>
-                <div className={styles.modal}>
-                    <img className={styles.modalImg} src={url} alt={tag} />
-                </div>
-            </div>,
-        modalRoot)
-    }  
-}
+export default Modal;
 
 Modal.propTypes = {
-    closeModal: PropTypes.func.isRequired,
-    url: PropTypes.string.isRequired,
-    tag: PropTypes.string.isRequired
-}
+  closeModal: PropTypes.func.isRequired,
+  url: PropTypes.string.isRequired,
+  tag: PropTypes.string.isRequired,
+};
